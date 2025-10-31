@@ -1076,7 +1076,7 @@ public class HUDUtils
                 }
             case 7:
                 {
-                    return "#CD5C5C";
+                    return "#CD5C5C"; //A02020
                 }
             default:
                 {

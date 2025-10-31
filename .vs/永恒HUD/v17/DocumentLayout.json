@@ -3,16 +3,12 @@
   "WorkspaceRootPath": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\hudutils.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u6C38\u6052HUD.csproj|solutionrelative:hudutils.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\hudutils.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|solutionrelative:hudutils.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u6C38\u6052HUD.csproj|solutionrelative:core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\hudclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u6C38\u6052HUD.csproj|solutionrelative:hudclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|solutionrelative:core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\\u7BA1\u6C38\u6052hud.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
@@ -21,6 +17,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\\u7BA1\u6C38\u6052hud.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
       "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|solutionrelative:\u7BA1\u6C38\u6052hud.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|d:\\tkfsingleplayer\\gitrepo\\400test\\\u6C38\u6052hud\\hudclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{21DDC177-D8EA-406F-9BB9-7994A8F3A26F}|\u7BA1\u6C38\u6052HUD.csproj|solutionrelative:hudclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,15 +34,14 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "\u6C38\u6052HUD",
+              "DocumentIndex": 3,
+              "Title": "\u7BA1\u6C38\u6052HUD",
               "DocumentMoniker": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\\u7BA1\u6C38\u6052HUD.csproj",
               "RelativeDocumentMoniker": "\u7BA1\u6C38\u6052HUD.csproj",
               "ToolTip": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\\u7BA1\u6C38\u6052HUD.csproj",
               "RelativeToolTip": "\u7BA1\u6C38\u6052HUD.csproj",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-10-27T13:52:03.527Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-27T13:52:03.527Z"
             },
             {
               "$type": "Document",
@@ -52,14 +51,14 @@
               "RelativeDocumentMoniker": "HUDUtils.cs",
               "ToolTip": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\HUDUtils.cs",
               "RelativeToolTip": "HUDUtils.cs",
-              "ViewState": "AgIAAMoAAAAAAAAAAAAUwNcAAAB8AAAAAAAAAA==",
+              "ViewState": "AgIAAB8EAAAAAAAAAAAUwD4EAABSAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-10-17T05:36:11.644Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "HUDClass.cs",
               "DocumentMoniker": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\HUDClass.cs",
               "RelativeDocumentMoniker": "HUDClass.cs",
@@ -67,21 +66,19 @@
               "RelativeToolTip": "HUDClass.cs",
               "ViewState": "AgIAALMAAAAAAAAAAAAswMMAAAAjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-16T16:35:48.321Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-16T16:35:48.321Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "\u6C38\u6052HUD.csproj",
+              "DocumentIndex": 2,
+              "Title": "\u7BA1\u6C38\u6052HUD.csproj",
               "DocumentMoniker": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\\u7BA1\u6C38\u6052HUD.csproj",
               "RelativeDocumentMoniker": "\u7BA1\u6C38\u6052HUD.csproj",
               "ToolTip": "D:\\TKFSinglePlayer\\GitRepo\\400TEST\\\u6C38\u6052HUD\\\u7BA1\u6C38\u6052HUD.csproj",
               "RelativeToolTip": "\u7BA1\u6C38\u6052HUD.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-10-16T09:45:50.894Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-16T09:45:50.894Z"
             },
             {
               "$type": "Document",

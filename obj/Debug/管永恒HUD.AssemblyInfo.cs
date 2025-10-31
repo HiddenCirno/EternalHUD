@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("管永恒HUD")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.0.1.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.1+3fadebca580df45886cef63f62706e8ff9b4601d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.1+1ea7baa22545927326bc7852aaa059b33cc20b92")]
 [assembly: System.Reflection.AssemblyProductAttribute("管永恒HUD")]
 [assembly: System.Reflection.AssemblyTitleAttribute("管永恒HUD")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.0.1.0")]
