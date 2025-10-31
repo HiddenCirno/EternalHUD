@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
+	  <NoWarn>CS8622</NoWarn>
     <Version>0.0.1</Version>
     <!-- The two lines below will set the output path for the binaries -->
     <OutputPath>I:\TKF\SPT\user\mods\$(ProjectName)\$(AssemblyName)\</OutputPath>
@@ -17,15 +18,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SPTarkov.Common" Version="4.0.0-pre.202510110943" />
-    <PackageReference Include="SPTarkov.DI" Version="4.0.0-pre.202510110943" />
-    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.0-pre.202510110943" />
+    <PackageReference Include="SPTarkov.Common" Version="4.0.2" />
+    <PackageReference Include="SPTarkov.DI" Version="4.0.2" />
+    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="fastJSON5">
+      <HintPath>I:\TKF\SPT\user\mods\火神之心-重生\fastJSON5.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="火神之心-重生">
       <HintPath>I:\TKF\SPT\user\mods\火神之心-重生\火神之心-重生.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="config.json5">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

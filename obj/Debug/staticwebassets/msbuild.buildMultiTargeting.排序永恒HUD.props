@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\排序永恒HUD.props" />
+</Project>
