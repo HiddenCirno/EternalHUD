@@ -283,4 +283,7 @@ public class DisplayConfig
 
     // 是否显示交易相关数据
     public bool ItemBGColor { get; set; }
+    public bool UseVanillaBGColor { get; set; }
+    public bool DogTagBGChange { get; set; }
+    public string TranslateLanguage { get; set; }
 }

@@ -1,0 +1,71 @@
+{
+  // 物品信息显示总开关
+  "ShowItemInfo": true,
+  // 任务信息显示总开关
+  "ShowQuestInfo": true,
+  // 自动检视功能开关
+  "AutoExamine": true,
+  "Color": {
+    // 物品信息显示的颜色, 分别对应八个等级
+    "ColorLevel0": "808080",
+    "ColorLevel1": "FFFFFF",
+    "ColorLevel2": "00AA00",
+    "ColorLevel3": "00A0FF",
+    "ColorLevel4": "AA00AA",
+    "ColorLevel5": "FFAA00",
+    "ColorLevel6": "AA0000",
+    "ColorLevel7": "FF55FF",
+    // 主线任务与灯塔商人前置任务高亮的颜色
+    "MainQuestColor": "FFA500",
+    "LightKeeperQuestColor": "228B22",
+    // 任务信息显示的颜色, 分别为前置任务, 后续任务和任务所需等级
+    "PreQuestColor": "FF6666",
+    "UnlockQuestColor": "80E0FF",
+    "QuestLevelColor": "66FF66"
+  },
+  "Tag": {
+    // 物品品质和任务高亮的前缀标签
+    "TagLevel0": "[废品]",
+    "TagLevel1": "[普通]",
+    "TagLevel2": "[精良]",
+    "TagLevel3": "[稀有]",
+    "TagLevel4": "[史诗]",
+    "TagLevel5": "[传奇]",
+    "TagLevel6": "[神话]",
+    "TagLevel7": "[超越]",
+    // 主线任务标签
+    "MainQuestTag": "「主线任务」",
+    // 灯塔之匙标签
+    "LightKeeperQuestTag": "「灯塔之匙」"
+  },
+  // 物品价值判断的界限
+  "Price": {
+    "PriceLevel1": 1000,
+    "PriceLevel2": 10000,
+    "PriceLevel3": 20000,
+    "PriceLevel4": 50000,
+    "PriceLevel5": 100000,
+    "PriceLevel6": 200000,
+    "PriceLevel7": 500000
+  },
+  "Display": {
+    // 是否修改物品名称
+    "Name": true,
+    // 是否显示物品品质标签
+    "ShowTagInName": true,
+    // 是否标记3x4以及灯塔商人任务前置
+    "MainQuest": true,
+    // 是否根据物品品质更改物品背景色
+    "ItemBGColor": true,
+    // 使用原版背景色而不是自定义背景色, Fika遇到TaxonomyColor相关问题可以打开此项以解决
+    "UseVanillaBGColor": false,
+    // 是否更改狗牌的背景颜色以区分Bear和Usec
+    "DogTagBGChange": true,
+    // 双语显示使用的语言, 默认为en, 支持游戏内内置语言, 常用有ge(德语), fr(法语), jp(日语), kr(韩语), ru(俄语)....
+    "TranslateLanguage":  "en"
+  },
+  "Link": {},
+  "ItemBlackList": [],
+  "LootBlackList": [],
+  "QuestBlackList": []
+}

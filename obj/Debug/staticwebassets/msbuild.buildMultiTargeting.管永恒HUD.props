@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\管永恒HUD.props" />
-</Project>

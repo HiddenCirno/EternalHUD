@@ -18,14 +18,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SPTarkov.Common" Version="4.0.2" />
-    <PackageReference Include="SPTarkov.DI" Version="4.0.2" />
-    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.2" />
+    <PackageReference Include="SPTarkov.Common" Version="4.0.6" />
+    <PackageReference Include="SPTarkov.DI" Version="4.0.6" />
+    <PackageReference Include="SPTarkov.Reflection" Version="4.0.6" />
+    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="fastJSON5">
-      <HintPath>I:\TKF\SPT\user\mods\火神之心-重生\fastJSON5.dll</HintPath>
+    <Reference Include="0Harmony">
+      <HintPath>I:\TKF\SPT\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="火神之心-重生">
@@ -35,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="config.json5">
+    <None Update="config.jsonc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

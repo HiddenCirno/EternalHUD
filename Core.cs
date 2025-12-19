@@ -1,23 +1,27 @@
+using HarmonyLib;
 using SPTarkov.DI.Annotations;
+using SPTarkov.Reflection.Patching;
 using SPTarkov.Server.Core.Controllers;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Common;
+using SPTarkov.Server.Core.Models.Eft.Common.Tables;
+using SPTarkov.Server.Core.Models.Eft.Ragfair;
 using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Logging;
+using SPTarkov.Server.Core.Models.Spt.Bots;
+using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Utils;
 using SPTarkov.Server.Core.Servers;
 using SPTarkov.Server.Core.Services;
-using System.Collections.ObjectModel;
 using SPTarkov.Server.Core.Utils;
+using SPTarkov.Server.Core.Utils.Cloners;
 using SPTarkov.Server.Core.Utils.Json;
-using VulcanCore;
-using SPTarkov.Server.Core.Models.Eft.Ragfair;
-using fastJSON5;
+using System.Collections.ObjectModel;
 using System.Reflection;
-using SPTarkov.Server.Core.Models.Spt.Config;
-using SPTarkov.Server.Core.Models.Eft.Common.Tables;
+using System.Text.Json;
+using VulcanCore;
 namespace EternalHUD;
 
 /// <summary>
@@ -34,7 +38,7 @@ public record EternalHUD : AbstractModMetadata
     public override string Name { get; init; } = "永恒HUD";
     public override string Author { get; init; } = "HiddenHiragi";
     public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public override SemanticVersioning.Version Version { get; init; } = new("1.5.0");
     public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     public override List<string>? Incompatibilities { get; init; }
     public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; } = new()
@@ -55,7 +59,12 @@ public class Core(
     public Task OnLoad()
     {
         HUDUtils.ModPath = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
-        HUDUtils.ModConfig = JSON5.ToObject<Config>(modHelper.GetRawFileData(HUDUtils.ModPath, "config.json5"));
+        HUDUtils.ModConfig = JsonSerializer.Deserialize<Config>(File.ReadAllText(System.IO.Path.Combine(HUDUtils.ModPath, "config.jsonc")), new JsonSerializerOptions
+        {
+            ReadCommentHandling = JsonCommentHandling.Skip // 启用注释解析
+        });
+        new RagfairLoadPostFixPatch().Enable();
+        //JSON5.ToObject<Config>(modHelper.GetRawFileData(HUDUtils.ModPath, "config.json5"));
         return Task.CompletedTask;
     }
 }
@@ -70,6 +79,7 @@ public class EternalHUDCustomStaticRouter : StaticRouter
     private static RagfairOfferService _ragfairOfferService;
     private static ItemHelper _itemHelper;
     private static ModHelper _modHelper;
+    private static ProfileHelper _profileHelper;
     private static VulcanCore.VulcanCore _vulcanCore;
     private static ISptLogger<VulcanCore.VulcanCore> _logger;
 
@@ -81,6 +91,7 @@ public class EternalHUDCustomStaticRouter : StaticRouter
         RagfairOfferService ragfairOfferService,
         ItemHelper itemHelper,
         ModHelper modHelper,
+        ProfileHelper profileHelper,
         VulcanCore.VulcanCore vulcanCore,
         ISptLogger<VulcanCore.VulcanCore> logger
         )
@@ -97,6 +108,7 @@ public class EternalHUDCustomStaticRouter : StaticRouter
         _modHelper = modHelper;
         _jsonUtil = jsonUtil;
         _logger = logger;
+        _profileHelper = profileHelper;
         _vulcanCore = vulcanCore;
     }
     private static List<RouteAction> GetCustomRoutes()
@@ -104,211 +116,226 @@ public class EternalHUDCustomStaticRouter : StaticRouter
         return
         [
             new RouteAction(
-                "/MiniHUD/getNameData",
+                "/EternalHUD/getNameData",
                 async (
                     url,
                     info,
                     sessionId,
                     output
-                ) => await HandleRoute(
+                ) => await HandleHUDCache(
                         url,
                         info as NameInfo,
                         sessionId,
                         _jsonUtil,
                         _databaseService,
-                        _ragfairController,
-                        _ragfairOfferService,
-                        _itemHelper,
-                        _modHelper,
                         _logger,
                         _vulcanCore
                 )
+            ),
+            new RouteAction(
+                "/EternalHUD/pullPriceMap",
+                async (url, info, sessionId, output) =>
+                    await HandlePriceMap(
+                        url,
+                        info as PriceMapRequestData,
+                        sessionId,
+                        _jsonUtil,
+                        _databaseService
+                    )
+            ),
+            new RouteAction<PMCDataRequestData>(
+                "/EternalHUD/getPMCData",
+                async (url, info, sessionId, output) =>
+                    await HandlePMCData(
+                        url,
+                        info,
+                        sessionId,
+                        _jsonUtil,
+                        _profileHelper,
+                        _logger
+                    )
+            ),
+            new RouteAction<RagfairPriceRequestData>(
+                "/EternalHUD/getRagfairPrice",
+                async (url, info, sessionId, output) =>
+                    await HandleRagfairPrice(
+                        url,
+                        info,
+                        sessionId,
+                        _jsonUtil,
+                        _ragfairController
+                    )
             )
         ];
     }
 
-    private static ValueTask<string> HandleRoute(
+    private static ValueTask<string> HandleHUDCache(
         string url,
         NameInfo info,
         MongoId sessionId,
         JsonUtil jsonUtil,
         DatabaseService databaseService,
-        RagfairController ragfairController,
-        RagfairOfferService ragfairOfferService,
-        ItemHelper itemHelper,
-        ModHelper modHelper,
         ISptLogger<VulcanCore.VulcanCore> logger,
         VulcanCore.VulcanCore vulcanCore
     )
     {
-        var useeng = false;
-        var test2 = databaseService.GetLocales().Global["en"];
-        databaseService.GetTraders().TryGetValue("656f0f98d80a697f855d34b1", out var trader);
-        //trader.Base.AvailableInRaid = false;
-        //test2.Value.TryGetValue("ef27f81993b027d956614ca1 Name", out string value);
-        //VulcanLog.Log(value, logger);
-        //test2.Value["ef27f81993b027d956614ca1 Name"] = "修改测试2";
-        // Your mods code goes here
-        if (!HUDUtils.havelogined)
-        {
-            HUDUtils.GenerateOriginalLocaleMap(databaseService, logger);
-            foreach (var item in databaseService.GetItems())
-            {
-                if (item.Value.Id == (MongoId)"ef27f81993b027d956614ca1")
-                {
-                    //item.Value.Properties.BackgroundColor = "#CD8F53";
-                }
-
-                if (item.Value.Type != "Node" && item.Value.Properties != null)
-                {
-                    var itemid = (string)item.Value.Id;
-                    HUDUtils.ItemList.Add(itemid);
-                    HUDUtils.RagfairStatusMap.Add(itemid, (bool)item.Value.Properties.CanSellOnRagfair);
-                    if (itemid == "ab520a65d655862cad07b11e")
-                    {
-                        //VulcanLog.Warn(HUDUtils.GetItemName(itemid), logger);
-                        //VulcanLog.Warn(HUDUtils.GetItemPrice(itemid, databaseService).ToString(), logger);
-                        //VulcanLog.Warn(HUDUtils.GetPresetPrice(itemid, databaseService).ToString(), logger);
-                        //VulcanLog.Log(HUDUtils.GetItemName(itemid), logger);
-                        //VulcanLog.Log(HUDUtils.IsPresetEquipment(itemid).ToString(), logger);
-                        //VulcanLog.Log(HUDUtils.GetItemLevel(itemid, databaseService).ToString(), logger);
-                        //VulcanLog.Log(HUDUtils.GetItemBackgroundColor(HUDUtils.GetItemLevel(itemid, databaseService)), logger);
-                    }
-                    if (HUDUtils.ModConfig.AutoExamine)
-                    {
-                        item.Value.Properties.ExaminedByDefault = true;
-                    }
-                }
-            }
-            //VulcanLog.Log(jsonUtil.Serialize(HUDUtils.TradeUseMap), logger);
-            //test2.AddTransformer(delegate (Dictionary<string, string> valuetest)
-            //{
-            //    valuetest["ef27f81993b027d956614ca1 Name"] = "修改测试";
-            //    return valuetest;
-            //});
-            //Transformer挂在这里单次执行应该就行, 问题应该不大....
-            //吧?
-            if (HUDUtils.ModConfig.ShowQuestInfo)
-            {
-                HUDUtils.SetQuestData(databaseService, logger);
-            }
-            if (HUDUtils.ModConfig.ShowItemInfo)
-            {
-                HUDUtils.SetItemData(databaseService, logger);
-            }
-            HUDUtils.GeneratePresetMap(databaseService, logger);
-            HUDUtils.GeneratePriceMap(databaseService, logger);
-            HUDUtils.GeneratePresetPriceMap(databaseService, logger);
-            HUDUtils.GenerateLocaleMap(databaseService, logger);
-            HUDUtils.GenerateQuestDataMap(databaseService, logger);
-            HUDUtils.GenerateProductMap(databaseService, logger);
-            HUDUtils.GenerateProductUseMap(databaseService, logger);
-            HUDUtils.GenerateQuestAssortMap(databaseService, logger);
-            HUDUtils.GenerateTradeMap(databaseService, logger);
-            HUDUtils.GenerateTradeUseMap(databaseService, logger);
-            HUDUtils.GenerateHandbookTagMap(databaseService, logger);
-            HUDUtils.GenerateQuestRewardDataMap(databaseService, logger);
-            HUDUtils.havelogined = true;
-        }
-        //test2.Value.TryGetValue("ef27f81993b027d956614ca1 Name", out string value2);
-        //VulcanLog.Log(value2, logger);
-        if (HUDUtils.ItemRequireMap.TryGetValue("5733279d245977289b77ec24", out ItemRequireData hideoutvalue))
-        {
-            //VulcanLog.Log("333", logger);
-        }
-        VulcanLog.Warn("开始处理客户端数据", logger);
-        foreach (var item in HUDUtils.ItemList)
-        {
-            HUDUtils.GenerateItemClientCache(item, useeng, databaseService);
-            if (HUDUtils.ModConfig.Display.ItemBGColor)
-            {
-                HUDUtils.SetItemBackgroundColor(item, databaseService, logger);
-            }
-            if (item == "ab520a65d655862cad07b11e")
-            {
-                //VulcanLog.Warn(HUDUtils.GetItemName(item), logger);
-                //VulcanLog.Warn(databaseService.GetHandbook().Items.FirstOrDefault(x => x.Id == item).Price.ToString(), logger);
-                //VulcanLog.Warn(databaseService.GetPrices().FirstOrDefault(x => x.Key == item).Value.ToString(), logger);
-                //VulcanLog.Warn(HUDUtils.GetItemPrice(item, databaseService).ToString(), logger);
-                //VulcanLog.Warn(HUDUtils.GetPresetPrice(item, databaseService).ToString(), logger);
-            }
-        }
-        VulcanLog.Access("客户端数据处理完成", logger);
-        //VulcanLog.Warn(jsonUtil.Serialize(HUDUtils.QuestRewardMap), logger);
-        //return new ValueTask<string>(_httpResponseUtil.NullResponse());
         return new ValueTask<string>(jsonUtil.Serialize(HUDUtils.ClientCache));
     }
-}
-public class EternalHUDNameData : IRequestData
-{
-    public string Request { get; set; }
-}
-
-[Injectable]
-public class PriceMapStaticRouter : StaticRouter
-{
-    private static HttpResponseUtil _httpResponseUtil;
-    private static DatabaseService _databaseService;
-    private static RagfairController _ragfairController;
-    private static JsonUtil _jsonUtil;
-    private static RagfairOfferService _ragfairOfferService;
-    private static ItemHelper _itemHelper;
-    private static VulcanCore.VulcanCore _corePostDBLoad;
-
-    public PriceMapStaticRouter(
-        JsonUtil jsonUtil,
-        HttpResponseUtil httpResponseUtil,
-        DatabaseService databaseService,
-        RagfairController ragfairController,
-        RagfairOfferService ragfairOfferService,
-        ItemHelper itemHelper,
-        VulcanCore.VulcanCore corePostDBLoad)
-        : base(jsonUtil, GetCustomRoutes())
-    {
-        _httpResponseUtil = httpResponseUtil;
-        _databaseService = databaseService;
-        _ragfairController = ragfairController;
-        _ragfairOfferService = ragfairOfferService;
-        _itemHelper = itemHelper;
-        _jsonUtil = jsonUtil;
-        _corePostDBLoad = corePostDBLoad;
-    }
-
-    private static List<RouteAction> GetCustomRoutes()
-    {
-        return new List<RouteAction>
-        {
-            new RouteAction(
-                "/ShowLootValue/pullPriceMap",
-                async (url, info, sessionId, output) =>
-                    await HandleRoute(
-                        url,
-                        info as PriceMapRequestData,
-                        sessionId,
-                        _jsonUtil,
-                        _databaseService,
-                        _ragfairController,
-                        _ragfairOfferService,
-                        _itemHelper,
-                        _corePostDBLoad
-                    )
-            )
-        };
-    }
-
-    private static ValueTask<string> HandleRoute(
+    private static ValueTask<string> HandlePriceMap(
         string url,
         PriceMapRequestData info,
         MongoId sessionId,
         JsonUtil jsonUtil,
-        DatabaseService databaseService,
-        RagfairController ragfairController,
-        RagfairOfferService ragfairOfferService,
-        ItemHelper itemHelper,
-        VulcanCore.VulcanCore corePostDBLoad
+        DatabaseService databaseService
         )
     {
+        return new ValueTask<string>(jsonUtil.Serialize(HUDUtils.PriceMap));
+    }
+    private static ValueTask<string> HandleRagfairPrice(
+        string url,
+        RagfairPriceRequestData info,
+        MongoId sessionId,
+        JsonUtil jsonUtil,
+        RagfairController ragfairController
+        )
+    {
+
         // 构建返回的价格字典
+        var pricedata = ragfairController.GetItemMinAvgMaxFleaPriceValues(new GetMarketPriceRequestData
+        {
+            TemplateId = info.templateId
+        });
+        return new ValueTask<string>(jsonUtil.Serialize(new RagfairPriceInfo
+        {
+            Price = pricedata.Avg != null ? (int)pricedata.Avg : 0
+        }));
+    }
+    private static ValueTask<string> HandlePMCData(
+        string url,
+        PMCDataRequestData info,
+        MongoId sessionId,
+        JsonUtil jsonUtil,
+        ProfileHelper profileHelper,
+        ISptLogger<VulcanCore.VulcanCore> logger
+        )
+    {
+        //VulcanLog.Debug($"{jsonUtil.Serialize(info)}", logger);
+        //VulcanLog.Warn($"{jsonUtil.Serialize(GetPMCData(ItemTpl.MONEY_ROUBLES, sessionId, profileHelper, logger))}", logger);
+
+        return new ValueTask<string>(jsonUtil.Serialize(GetPMCData(info.templateId, sessionId, profileHelper, logger)));
+    }
+    public static PMCDataInfo GetPMCData(string templateId, MongoId sessionId, ProfileHelper profileHelper, ISptLogger<VulcanCore.VulcanCore> logger)
+    {
+        PMCDataInfo result = new PMCDataInfo
+        {
+            fircount = 0,
+            count = 0,
+        };
+        try
+        {
+            var profile = profileHelper.GetProfileByPmcId(sessionId);
+            if (profile == null)
+            {
+                return result;
+            }
+            else
+            {
+                if (profile.Inventory == null || profile.Inventory.Items == null)
+                {
+                    return result;
+                }
+                result.fircount = (int)profile.Inventory.Items.Where(x =>
+                    x.Template == templateId &&
+                    x.Upd?.SpawnedInSession == true
+                ).Sum(x=>x.Upd?.StackObjectsCount ?? 1);
+
+                result.count = (int)profile.Inventory.Items.Where(x =>
+                    x.Template == templateId
+                ).Sum(x => x.Upd?.StackObjectsCount ?? 1);
+            }
+        }
+        catch (Exception ex)
+        {
+            VulcanLog.Error(ex.StackTrace, logger);
+        }
+        return result;
+    }
+}
+
+public class PriceMapRequestData : IRequestData
+{
+    public string Request { get; set; }
+}
+public class PMCDataRequestData : IRequestData
+{
+    public string templateId { get; set; }
+}
+public class RagfairPriceRequestData : IRequestData
+{
+    public string templateId { get; set; }
+}
+public class PMCDataInfo
+{
+    public int fircount { get; set; }
+    public int count { get; set; }
+}
+public class RagfairPriceInfo
+{
+    public int Price { get; set; }
+}
+public class RagfairLoadPostFixPatch : AbstractPatch
+{
+    public static bool firststart = false;
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(RagfairServer).GetMethod("Load", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+    }
+
+    [PatchPostfix]
+    public static void Postfix(RagfairServer __instance)
+    {
+        var logger = ServiceLocator.ServiceProvider.GetService<ISptLogger<VulcanCore.VulcanCore>>();
+        var databaseService = ServiceLocator.ServiceProvider.GetService<DatabaseService>();
+        var configServer = ServiceLocator.ServiceProvider.GetService<ConfigServer>();
+        var cloner = ServiceLocator.ServiceProvider.GetService<ICloner>();
+        VulcanLog.Warn("永恒HUD初始化中, 请稍后....", logger);
+        HUDUtils.GenerateOriginalLocaleMap(databaseService, logger);
+        foreach (var item in databaseService.GetItems())
+        {
+            if (item.Value.Id == (MongoId)"ef27f81993b027d956614ca1")
+            {
+                //item.Value.Properties.BackgroundColor = "#CD8F53";
+            }
+
+            if (item.Value.Type != "Node" && item.Value.Properties != null)
+            {
+                var itemid = (string)item.Value.Id;
+                HUDUtils.ItemList.Add(itemid);
+                HUDUtils.RagfairStatusMap.Add(itemid, (bool)item.Value.Properties.CanSellOnRagfair);
+                if (itemid == "ab520a65d655862cad07b11e")
+                {
+                    //VulcanLog.Warn(HUDUtils.GetItemName(itemid), logger);
+                    //VulcanLog.Warn(HUDUtils.GetItemPrice(itemid, databaseService).ToString(), logger);
+                    //VulcanLog.Warn(HUDUtils.GetPresetPrice(itemid, databaseService).ToString(), logger);
+                    //VulcanLog.Log(HUDUtils.GetItemName(itemid), logger);
+                    //VulcanLog.Log(HUDUtils.IsPresetEquipment(itemid).ToString(), logger);
+                    //VulcanLog.Log(HUDUtils.GetItemLevel(itemid, databaseService).ToString(), logger);
+                    //VulcanLog.Log(HUDUtils.GetItemBackgroundColor(HUDUtils.GetItemLevel(itemid, databaseService)), logger);
+                }
+                if (HUDUtils.ModConfig.AutoExamine)
+                {
+                    item.Value.Properties.ExaminedByDefault = true;
+                }
+            }
+        }
+        //VulcanLog.Log(jsonUtil.Serialize(HUDUtils.TradeUseMap), logger);
+        //test2.AddTransformer(delegate (Dictionary<string, string> valuetest)
+        //{
+        //    valuetest["ef27f81993b027d956614ca1 Name"] = "修改测试";
+        //    return valuetest;
+        //});
+        //Transformer挂在这里单次执行应该就行, 问题应该不大....
+        //吧?
         var priceMap = new Dictionary<string, int>();
         foreach (var item in databaseService.GetItems())
         {
@@ -319,20 +346,42 @@ public class PriceMapStaticRouter : StaticRouter
                 priceMap[itemId] = price;
             }
         }
-
-        // 使用 HttpResponseUtil 返回标准格式 JSON
-        //string jsonResponse = _httpResponseUtil.GetBody(priceMap);
-        //绕过SPT提供的方法直接传递原始数据
-        return new ValueTask<string>(jsonUtil.Serialize(priceMap));
+        HUDUtils.PriceMap = priceMap;
+        if (HUDUtils.ModConfig.ShowQuestInfo)
+        {
+            HUDUtils.SetQuestData(databaseService, logger);
+        }
+        if (HUDUtils.ModConfig.ShowItemInfo)
+        {
+            HUDUtils.SetItemData(databaseService, logger);
+        }
+        HUDUtils.GeneratePresetMap(databaseService, logger);
+        HUDUtils.GeneratePriceMap(databaseService, logger);
+        HUDUtils.GeneratePresetPriceMap(databaseService, logger);
+        HUDUtils.GenerateLocaleMap(databaseService, logger);
+        HUDUtils.GenerateQuestDataMap(databaseService, logger);
+        HUDUtils.GenerateProductMap(databaseService, logger);
+        HUDUtils.GenerateProductUseMap(databaseService, logger);
+        HUDUtils.GenerateQuestAssortMap(databaseService, logger);
+        HUDUtils.GenerateTradeMap(databaseService, logger);
+        HUDUtils.GenerateTradeUseMap(databaseService, logger);
+        HUDUtils.GenerateHandbookTagMap(databaseService, logger);
+        HUDUtils.GenerateQuestRewardDataMap(databaseService, logger);
+        VulcanLog.Warn("开始处理全部数据", logger);
+        foreach (var item in HUDUtils.ItemList)
+        {
+            HUDUtils.GenerateItemClientCache(item, false, databaseService);
+            HUDUtils.SetItemBackgroundColor(item, databaseService, logger);
+            if (item == "ab520a65d655862cad07b11e")
+            {
+                //VulcanLog.Warn(HUDUtils.GetItemName(item), logger);
+                //VulcanLog.Warn(databaseService.GetHandbook().Items.FirstOrDefault(x => x.Id == item).Price.ToString(), logger);
+                //VulcanLog.Warn(databaseService.GetPrices().FirstOrDefault(x => x.Key == item).Value.ToString(), logger);
+                //VulcanLog.Warn(HUDUtils.GetItemPrice(item, databaseService).ToString(), logger);
+                //VulcanLog.Warn(HUDUtils.GetPresetPrice(item, databaseService).ToString(), logger);
+            }
+        }
+        VulcanLog.Access("数据处理完成", logger);
+        VulcanLog.Log("永恒HUD初始化完成", logger);
     }
-}
-public class PriceMapRequestData : IRequestData
-{
-    public string Request { get; set; }
-}
-public class GetBodyResponseData<T>
-{
-    public BackendErrorCodes Err { get; set; }
-    public string? ErrMsg { get; set; }
-    public T Data { get; set; } = default!;
 }

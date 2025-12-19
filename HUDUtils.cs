@@ -163,7 +163,6 @@ public class HUDUtils
     }
     public static void GeneratePresetPriceMap(DatabaseService databaseService, ISptLogger<VulcanCore.VulcanCore> logger)
     {
-
         foreach (var item in databaseService.GetItems())
         {
             var itemid = (string)item.Value.Id;
@@ -190,11 +189,31 @@ public class HUDUtils
         var locales = databaseService.GetLocales().Global;
         foreach (var locale in locales)
         {
-            LocaleMap[locale.Key] = new Dictionary<string, string>();
-            var localevalue = locale.Value.Value;
-            foreach (var item in localevalue)
+            var lang = locale.Key;
+            try
             {
-                LocaleMap[locale.Key][item.Key] = item.Value;
+                var lazy = locale.Value;
+                if (lazy == null)
+                {
+                    VulcanLog.Warn($"语言 {lang} 的 LazyLoad 为 null", logger);
+                    continue;
+                }
+                Dictionary<string, string> localevalue;
+                try
+                {
+                    localevalue = lazy.Value; // LazyLoad 可能在这里抛异常
+                }
+                catch (Exception ex)
+                {
+                    VulcanLog.Warn($"语言 {lang} 在加载 LazyLoad 时失败: {ex}", logger);
+                    continue;
+                }
+                if (localevalue == null) continue;
+                LocaleMap[lang] = localevalue;
+            }
+            catch (Exception ex)
+            {
+                VulcanLog.Warn($"语言 {locale.Key} 解析失败: {ex}", logger);
             }
         }
         VulcanLog.Log("语言索引生成完成", logger);
@@ -204,11 +223,31 @@ public class HUDUtils
         var locales = databaseService.GetLocales().Global;
         foreach (var locale in locales)
         {
-            OriginalLocaleMap[locale.Key] = new Dictionary<string, string>();
-            var localevalue = locale.Value.Value;
-            foreach (var item in localevalue)
+            var lang = locale.Key;
+            try
             {
-                OriginalLocaleMap[locale.Key][item.Key] = item.Value;
+                var lazy = locale.Value;
+                if (lazy == null)
+                {
+                    VulcanLog.Warn($"语言 {lang} 的 LazyLoad 为 null", logger);
+                    continue;
+                }
+                Dictionary<string, string> localevalue;
+                try
+                {
+                    localevalue = lazy.Value; // LazyLoad 可能在这里抛异常
+                }
+                catch (Exception ex)
+                {
+                    VulcanLog.Warn($"语言 {lang} 在加载 LazyLoad 时失败: {ex}", logger);
+                    continue;
+                }
+                if (localevalue == null) continue;
+                OriginalLocaleMap[lang] = localevalue;
+            }
+            catch (Exception ex)
+            {
+                VulcanLog.Warn($"语言 {locale.Key} 解析失败: {ex}", logger);
             }
         }
         VulcanLog.Log("语言索引生成完成", logger);
@@ -634,6 +673,10 @@ public class HUDUtils
                             }
                             break;
                     }
+                }
+                foreach (var item in recipe.Requirements)
+                {
+                    var itemid = (string)item.TemplateId;
                     if (itemid != null)
                     {
                         ItemProductUseMap.TryGetValue(itemid, out var recipedata);
@@ -888,9 +931,18 @@ public class HUDUtils
     }
     public static string GetLocale(string localeKey, string language = "ch")
     {
-        var locales = LocaleMap[language];
-        locales.TryGetValue(localeKey, out string value);
-        return value != null ? value : "这是一个空键";
+        if (language == "ch")
+        {
+            var locales = LocaleMap[language];
+            locales.TryGetValue(localeKey, out string value);
+            return value != null ? value : "这是一个空键";
+        }
+        else
+        {
+            var locales = OriginalLocaleMap[language];
+            locales.TryGetValue(localeKey, out string value);
+            return value != null ? value : "这是一个空键";
+        }
     }
     public static string GetOriginalLocale(string localeKey, string language = "ch")
     {
@@ -961,13 +1013,33 @@ public class HUDUtils
         var color = GetItemBackgroundColor(level);
         if (color != null)
         {
-            if (itemid == "5648a69d4bdc2ded0b8b457b")
-            {
-                //VulcanLog.Warn(GetItemName(itemid), logger);
-            }
-            if (GetItemNotBlacked(itemid))
+            if (GetItemNotBlacked(itemid) && ModConfig.Display.ItemBGColor)
             {
                 item.Properties.BackgroundColor = color;
+            }
+            if ( //usec
+                itemid == "59f32c3b86f77472a31742f0" || //normal
+                itemid == "6662ea05f6259762c56f3189" || //uhd
+                itemid == "6662e9f37fa79a6d83730fa0" || //eod
+                itemid == "6764207f2fa5e32733055c4a" || //p1
+                itemid == "6764202ae307804338014c1a" || //p2
+                itemid == "68418091b5b0c9e4c60f0e7a" || //p3
+                itemid == "684180ee9b6d80d840042e8a"    //p4
+                )
+            {
+                item.Properties.BackgroundColor = "blue";
+            }
+            if ( //bear
+                itemid == "59f32bb586f774757e1e8442" || //normal
+                itemid == "6662e9cda7e0b43baa3d5f76" || //uhd
+                itemid == "6662e9aca7e0b43baa3d5f74" || //eod
+                itemid == "675dc9d37ae1a8792107ca96" || //p1
+                itemid == "675dcb0545b1a2d108011b2b" || //p2
+                itemid == "684180bc51bf8645f7067bc8" || //p3
+                itemid == "684181208d035f60230f63f9"    //p4
+                )
+            {
+                item.Properties.BackgroundColor = "orange";
             }
         }
     }
@@ -1003,7 +1075,7 @@ public class HUDUtils
             $"<color=#CommonColor>品质: </color><color=#{GetItemTagColor(itemid, databaseService)}>{GetItemTag(itemid, databaseService).TrimStart('[').TrimEnd(']')}</color>\n";
         var AmmoString = HUDUtils.GetAmmoDataString(CacheAmmo, useeng);
         var ArmorString = HUDUtils.GetArmorDataString(CacheArmor, useeng);
-        var CopyString = useeng ? "<i>Press Ctrl+C to copy ID to clipboard</i>\n" : "<i>按下Ctrl+C复制物品ID</i>\n";
+        var CopyString = useeng ? "<i>Press Ctrl+Alt+C to copy ID to clipboard</i>\n" : "<i>按下Ctrl+Alt+C复制物品ID</i>\n";
         var QuestString = HUDUtils.GetItemQuestString(itemid, useeng);
         var QuestHandoverString = HUDUtils.GetItemQuestHandoverString(itemid, useeng);
         var QuestLeaveString = HUDUtils.GetItemLeaveString(itemid, useeng);
@@ -1021,7 +1093,7 @@ public class HUDUtils
             Name = useeng ? "Name: " : "名称: ",
             TrueName = HUDUtils.GetItemName(itemid),
             StringName = itemid,
-            EName = useeng ? string.Empty : $"<color=#CommonColor>英文: {HUDUtils.GetItemName(itemid, "en")}</color>\n",
+            EName = useeng ? string.Empty : $"<color=#CommonColor>双语: {HUDUtils.GetItemName(itemid, ModConfig.Display.TranslateLanguage)}</color>\n",
             AmmoString = AmmoString != string.Empty ? $"{AmmoString}\n" : string.Empty,
             ArmorString = TradeUseString != string.Empty ? TradeUseString : string.Empty, //TradeUse
             ArmorString2 = ProductUseString != string.Empty ? ProductUseString : string.Empty,//ProductUse
@@ -1044,6 +1116,7 @@ public class HUDUtils
     }
     public static string? GetItemBackgroundColor(int level)
     {
+        var usevanillacolor = ModConfig.Display.UseVanillaBGColor;
         switch (level)
         {
             case 0:
@@ -1052,31 +1125,31 @@ public class HUDUtils
                 }
             case 1:
                 {
-                    return "#A9A9A9";
+                    return usevanillacolor ? "default" : "#A9A9A9";
                 }
             case 2:
                 {
-                    return "#3CB371";
+                    return usevanillacolor ? "green" : "#3CB371";
                 }
             case 3:
                 {
-                    return "#4682B4";
+                    return usevanillacolor ? "blue" : "#4682B4";
                 }
             case 4:
                 {
-                    return "#9370DB";
+                    return usevanillacolor ? "violet" : "#9370DB";
                 }
             case 5:
                 {
-                    return "#CD8F53";
+                    return usevanillacolor ? "yellow" : "#CD8F53";
                 }
             case 6:
                 {
-                    return "#CD5C5C";
+                    return usevanillacolor ? "red" : "#CD5C5C";
                 }
             case 7:
                 {
-                    return "#CD5C5C"; //A02020
+                    return usevanillacolor ? "red" : "#CD5C5C"; //A02020
                 }
             default:
                 {
